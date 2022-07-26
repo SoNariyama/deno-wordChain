@@ -7,38 +7,89 @@
     </head>
 
     <body>
-        <h1>しりとり</h1>
-        <p id="previousWord"></p>
-        <input id="nextWordInput" type="text" />
-        <button id="nextWordSendButton">送信</button>
+        <div class="sidebar">
+            <h2>#これまでの単語</h2>
+            <ul id="p1"></ul>
+        </div>
 
+        <div class="center">
+            <div class="center__header">
+                <h1>"逆"しりとり</h1>
+            </div>
+
+            <p>前の単語の文頭の文字が文末に来る単語を入力してください</p>
+            <p>例) <strong>し</strong>りとり → <strong>げ</strong>ん<strong>し</strong>(原子,原始) → <strong>ち</strong>ょんま<strong>げ</strong>(丁髷) → まっ<strong>ち</strong>(マッチ)...</p>
+
+            <div class="sendBox">
+                <p id="previousWord"></p>
+                <div class="sendBox__input">
+                    <input id="nextWordInput" type="text" placeholder="ここに入力"/>
+                </div>
+                <button class="sendBox__sendButton" id="nextWordSendButton">送信</button>
+            </div>
+        </div>
+        
         <script type="module">
             window.onload = async (event) => {
                 const response = await fetch("/shiritori");
                 const previousWord = await response.text();
-
+                let myData = [];
+                myData.push(document.querySelector("#previousWord"));
                 const para = document.querySelector("#previousWord");
                 para.innerText = `前の単語 : ${previousWord}`;
             };
 
+            let input = document.querySelector("input");
+            const disableEvent = e => {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+            input.addEventListener("paste", disableEvent);
+            input.addEventListener("drop", disableEvent);
+            input.addEventListener("keyup", function (e) {
+                let tmp = [];
+                this.value.split("").forEach(function (item, i) {
+                    if (item.match(/^[\u3040-\u309fー]+$/)) {
+                        tmp.push(item);
+                    }
+                });
+                if (tmp.length > 0) {
+                    this.value = tmp.join("");
+                } else {
+                    this.value = "";
+                }
+            });
+
             document.querySelector("#nextWordSendButton").onclick = async (event) => {
                 const nextWord = document.querySelector("#nextWordInput").value;
+                //alert("hoge");
                 const response = await fetch("/shiritori", {
                     method:"POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({nextWord})
                 });
-
                 if (response.status / 100 !== 2){
                     alert(await response.text());
                     return;
                 }
-
                 const previousWord = await response.text();
-
                 const para = document.querySelector("#previousWord");
                 para.innerText = `前の単語 : ${previousWord}`;
+
+                var ul = document.getElementById('p1');
+                var li = document.createElement('li');
+                var newText = document.createTextNode(previousWord);
+                li.appendChild(newText);
+                ul.appendChild(li);
+
+                var usedWord = [];
+                usedWord.push(JSON.stringify(previousWord));
+                //alert(usedWord);
+                /*if (usedWord.includes(nextWord)) {
+                    alert("同じ単語を2度入力しました。");
+                }*/
             };
+
         </script>
     </body>
     
